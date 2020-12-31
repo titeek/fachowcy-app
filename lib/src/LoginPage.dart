@@ -1,9 +1,15 @@
 import 'dart:convert';
 
+import 'package:fachowcy_app/Config/Authentication.dart';
 import 'package:fachowcy_app/Config/Config.dart';
 import 'package:fachowcy_app/Data/User.dart';
+import 'package:fachowcy_app/src/customWidgets/Loader.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_signin_button/button_builder.dart';
+import 'package:flutter_signin_button/button_list.dart';
+import 'package:flutter_signin_button/button_view.dart';
+import 'package:hexcolor/hexcolor.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +35,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  bool isLoading = false;
   TextEditingController emailController = new TextEditingController();
   TextEditingController passwordController = new TextEditingController();
   bool isLoggedIn = false;
@@ -37,14 +44,12 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    autoLogIn();
-
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.blue,
+    return isLoading ? Loader() : Scaffold(
+      backgroundColor: HexColor(Config.mainColor),
       body: SingleChildScrollView(
         child: Container(
           margin: const EdgeInsets.only(left: 40, right: 40),
@@ -121,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
               Builder(
                 builder: (context) => Center(
                   child: FlatButton(
-                    color: Colors.green,
+                    color: HexColor(Config.buttonColor),
                     textColor: Colors.white,
                     padding: EdgeInsets.all(16.0),
                     splashColor: Colors.greenAccent,
@@ -129,17 +134,17 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(15.0),
                     ),
                     onPressed: ()async {
+                      // setState(() => isLoading = true);
                       var result = await login(emailController.text,passwordController.text);
-                      print(result);
                       if(result==200) {
-                        Navigator.push(
+                        // setState(() => isLoading = false);
+                        await Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => UserMainPage()));
                       } else {
+                        // setState(() => isLoading = false);
                         _showToastWrong(context, 'Coś poszło nie tak!');
                       }
-
-
                     },
                     child: Text(
                       "Zaloguj się",
@@ -148,14 +153,9 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
-              Text(
-                "Nie masz konta?",
-                style: TextStyle(color: Colors.white),
-              ),
-              SizedBox(height: 10),
+              SizedBox(height: 8),
               FlatButton(
-                color: Colors.green,
+                color: HexColor(Config.buttonColor),
                 textColor: Colors.white,
                 padding: EdgeInsets.all(16.0),
                 splashColor: Colors.greenAccent,
@@ -172,6 +172,31 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 20.0),
                 ),
               ),
+              SizedBox(height: 8),
+              SignInButton(
+                  Buttons.Facebook,
+                  text: "Zaloguj przez Facebook",
+                  padding: EdgeInsets.all(16.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
+                  ),
+
+                  onPressed: () async{
+                    Authentication auth = Authentication();
+                    var resultFacebook = await auth.signInFB();
+                    print(resultFacebook);
+
+                    if(resultFacebook!=null)
+                    {
+                      RegisterPage().createUserFacebook(resultFacebook.values.elementAt(1), resultFacebook.values.elementAt(3), resultFacebook.values.elementAt(2),
+                          '', '', resultFacebook.values.elementAt(3)+resultFacebook.values.elementAt(4),WhoUsing.user);
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => UserMainPage()));
+                    }
+
+                    // .whenComplete((onComplete) {
+                    //   Navigator.of(context}.push(MaterialPageRoute(builder: (context)=>HomePage()));},
+                  }
+              ),
             ],
           ),
         ),
@@ -183,7 +208,7 @@ class _LoginPageState extends State<LoginPage> {
     final scaffold = Scaffold.of(context);
     scaffold.showSnackBar(
       SnackBar(
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.redAccent,
         content: new Text(message , style: const TextStyle(fontSize: 16)),
         action: SnackBarAction(
             label: 'Zamknij', onPressed: scaffold.hideCurrentSnackBar, textColor: Colors.white),
@@ -223,87 +248,17 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         emailShared = emailController.text;
         passwordShared = passwordController.text;
-        isLoggedIn = true;
+        isLoggedIn = false;
+        // isLoading = false;
       });
 
-        return response.statusCode;
+      return response.statusCode;
       // return User.fromJson(jsonDecode(response.body));
     }
     return response.statusCode;
   }
 
-  void autoLogIn() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String userEmail = prefs.getString('email');
-    final String userPassword = prefs.getString('password');
 
-    if (userEmail != null) {
-      setState(() {
-        isLoggedIn = true;
-        emailShared = userEmail;
-        passwordShared = userPassword;
-      });
-        final temp=  await loginFromSharedData(userEmail, userPassword);
-
-        if(temp==1) {
-            Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UserMainPage()));
-          }
-        else {
-            print('Failed to Auto login');
-          }
-      };
-
-    }
-
-
-
-  Future<int> loginFromSharedData(String email,String password)async {
-    var UserXML = {};
-    // UserXML["id"] = 4444;
-    UserXML["name"] = '';
-    UserXML["lastName"] = '';
-    UserXML["password"] = password;
-    UserXML["telephone"] = '';
-    UserXML["adresse"] = '';
-    UserXML["email"] = email;
-    String str = json.encode(UserXML);
-
-    emailController.clear();
-    passwordController.clear();
-
-
-    final http.Response response = await http.post(
-        Config.serverHostString + 'api/users/loginHashed',
-        headers:{'Content-Type': 'application/json'},
-        body: str
-    );
-    print('Auto login response code '  + response.statusCode.toString());
-    print('Auto login response body '  + response.body.toString());
-    // CHECK THE REPOSONE NUMBERS
-    if ((response.statusCode >= 200)&&(response.statusCode <=299)) {
-
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-     // User temp = User.fromJson(jsonDecode(response.body));
-      prefs.setString('email', email);
-      prefs.setString('password', password);
-      setState(() {
-        emailShared = email;
-        passwordShared = password;
-        isLoggedIn = true;
-      });
-      Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => UserMainPage()));
-      // return User.fromJson(jsonDecode(response.body));
-      return 1;
-    }
-    else
-      return 0;
-
-    }
 
 
 }

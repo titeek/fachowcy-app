@@ -15,13 +15,13 @@ import 'dart:convert';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ChangeUserProfilePhoto extends StatefulWidget {
+class ChangePortfolio extends StatefulWidget {
   @override
-  _ChangeUserProfilePhotoState createState() => _ChangeUserProfilePhotoState();
+  _ChangePortfolioState createState() => _ChangePortfolioState();
 }
 
-class _ChangeUserProfilePhotoState extends State<ChangeUserProfilePhoto> {
-  File _image;
+class _ChangePortfolioState extends State<ChangePortfolio> {
+  File _portfolio;
   static var photoUrl;
   static int status;
 
@@ -42,11 +42,12 @@ class _ChangeUserProfilePhotoState extends State<ChangeUserProfilePhoto> {
                   width: 240.0,
                   height: 240.0,
                   child: GestureDetector(
-                    onTap: _getImage,
+                    onTap: _getPortfolio,
                     child: Container(
                       color: Colors.black12,
-                      child:
-                          _image == null ? Icon(Icons.add) : Image.file(_image),
+                      child: _portfolio == null
+                          ? Icon(Icons.add)
+                          : Image.file(_portfolio),
                     ),
                   ),
                 ),
@@ -66,8 +67,8 @@ class _ChangeUserProfilePhotoState extends State<ChangeUserProfilePhoto> {
                                 borderRadius: BorderRadius.circular(15.0),
                               ),
                               onPressed: () async {
-                                await (createUrlFromPhoto(_image));
-                                await (changeUserProfilePhoto(photoUrl.photo1));
+                                await (createUrlFromPhoto(_portfolio));
+                                await (changeUserPortfolio(photoUrl.photo1));
 
                                 if (status == 200) {
                                   _showToastGood(context,
@@ -78,7 +79,7 @@ class _ChangeUserProfilePhotoState extends State<ChangeUserProfilePhoto> {
                                 }
                               },
                               child: Text(
-                                "Zmień zdjęcie profilowe",
+                                "Załaduj portfolio",
                                 style: TextStyle(fontSize: 20.0),
                               ),
                             ),
@@ -127,19 +128,19 @@ class _ChangeUserProfilePhotoState extends State<ChangeUserProfilePhoto> {
                                 borderRadius: BorderRadius.circular(15.0),
                               ),
                               onPressed: () async {
-                                await (createUrlFromPhoto(_image));
-                                await (changeUserProfilePhoto(photoUrl.photo1));
+                                await (createUrlFromPhoto(_portfolio));
+                                await (changeUserPortfolio(photoUrl.photo1));
 
                                 if (status == 200) {
                                   _showToastGood(context,
-                                      "Udało się zmienić zdjęcie profilowe");
+                                      "Udało Ci się zmienić portfolio!");
                                 } else {
                                   _showToastWrong(
                                       context, "Upss.. coś poszło nie tak!");
                                 }
                               },
                               child: Text(
-                                "Zmień zdjęcie profilowe",
+                                "Załaduj portfolio",
                                 style: TextStyle(fontSize: 20.0),
                               ),
                             ),
@@ -181,22 +182,22 @@ class _ChangeUserProfilePhotoState extends State<ChangeUserProfilePhoto> {
     );
   }
 
-  Future<void> changeUserProfilePhoto(String photo) async {
+  Future<void> changeUserPortfolio(String portfolio) async {
     var newPostJson = {};
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     String email = prefs.getString('email');
 
     newPostJson["email"] = email;
-    newPostJson["profilePhoto"] = photo;
-    String profilePhoto = json.encode(newPostJson);
+    newPostJson["portfolio"] = portfolio;
+    String portfolioJson = json.encode(newPostJson);
 
     final http.Response response = await http.post(
-        Config.serverHostString + '/api/users/updateProfilePhoto',
+        Config.serverHostString + '/api/users/updatePortfolio',
         headers: {'Content-Type': 'application/json'},
-        body: profilePhoto);
+        body: portfolioJson);
 
-    print("Kod z change photo: " + response.statusCode.toString());
+    print("Kod z change portfolio: " + response.statusCode.toString());
     status = response.statusCode;
   }
 
@@ -229,11 +230,11 @@ class _ChangeUserProfilePhotoState extends State<ChangeUserProfilePhoto> {
     return response.body;
   }
 
-  Future<void> _getImage() async {
+  Future<void> _getPortfolio() async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
     setState(() {
-      _image = image;
-      print("GET camera: $_image");
+      _portfolio = image;
+      print("GET camera: $_portfolio");
     });
   }
 

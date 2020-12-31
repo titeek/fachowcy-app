@@ -16,9 +16,9 @@ import 'Portfolio.dart';
 import 'ProfileFromComment.dart';
 import 'customWidgets/AdCardSmall.dart';
 
-class ProfileFromAd extends StatefulWidget {
+class ProfileFromComment extends StatefulWidget {
   @override
-  _ProfileFromAdState createState() => _ProfileFromAdState();
+  _ProfileFromCommentState createState() => _ProfileFromCommentState();
 
   static int userId;
   int adNumber;
@@ -27,7 +27,7 @@ class ProfileFromAd extends StatefulWidget {
   static double overallRating = 0;
   static int numberOfRatings = 0;
 
-  ProfileFromAd(int id) {
+  ProfileFromComment(int id) {
     this.adNumber = id;
   }
 
@@ -39,10 +39,7 @@ class ProfileFromAd extends StatefulWidget {
           color: HexColor(Config.mainColor),
           child: CustomScrollView(
             slivers: <Widget>[
-              SliverAppBar(
-                title: Text('testst'),
-              ),
-              // CustomAppBar(),
+              CustomAppBar(),
               SliverList(
                 delegate: SliverChildListDelegate([
                   Container(
@@ -85,7 +82,7 @@ class ProfileFromAd extends StatefulWidget {
                             profileData.name,
                             profileData.lastName,
                             profileData.id,
-                            profileData.userId,
+                            profileData.id,
                             profileData.portfolio),
                         ContactSection(
                             profileData.phoneNumber, profileData.email),
@@ -104,51 +101,34 @@ class ProfileFromAd extends StatefulWidget {
     );
   }
 
-  static Future<int> getProfileDataByAdId(int id) async {
-    var UserXML = {};
-
-    UserXML["serviceCardId"] = id;
-    String serviceCardId = json.encode(UserXML);
-
-    final http.Response response = await http.post(
-      Config.serverHostString + '/api/service-card/findUserByServiceCardID',
-      headers: {'Content-Type': 'application/json'},
-      body: serviceCardId,
+  static Future<int> getProfileDataById(int id) async {
+    final response = await http.get(
+      Config.serverHostString + '/api/users/findbyID?id=' + id.toString(),
     );
 
     Map userProfileDataMap = jsonDecode(response.body);
 
     var userProfileData = UserProfileFromAdData.fromJson(userProfileDataMap);
 
-    int indexx;
-
-    for (int i = 0; i < userProfileData.serviceCardLists.length; i++) {
-      if (userProfileData.serviceCardLists[i].serviceCardId == id) {
-        indexx = i;
-        break;
-      }
-    }
-
     // TODO: CHECK THE REPOSONE NUMBERS
 
     if ((response.statusCode >= 200) && (response.statusCode <= 299)) {
       profileData = userProfileData;
-      index = indexx;
-      print("User profile data from ad received from server");
+      print("User profile data from comment received from server");
       return response.statusCode;
     } else {
-      throw new Exception('Failed to load profile data after ad.');
+      throw new Exception('Failed to load profile data after comment.');
     }
   }
 }
 
-class _ProfileFromAdState extends State<ProfileFromAd> {
+class _ProfileFromCommentState extends State<ProfileFromComment> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         body: Container(
-          color: HexColor(Config.mainColor),
+          color: Colors.blue,
           child: CustomScrollView(
             slivers: <Widget>[
               CustomAppBar(),
@@ -164,58 +144,23 @@ class _ProfileFromAdState extends State<ProfileFromAd> {
                                   Orientation.portrait
                               ? Column(
                                   children: <Widget>[
-                                    ClipRRect(
-                                        borderRadius: BorderRadius.circular(20),
-                                        child: ProfileFromAd
-                                                    .profileData.profilePhoto ==
-                                                null
-                                            ? Container(
-                                                color: Colors.grey,
-                                                width: 120,
-                                                height: 120,
-                                                child: Center(
-                                                  child: Icon(
-                                                    Icons.no_photography,
-                                                    size: 32.0,
-                                                  ),
+                                    ClipRRect(borderRadius: BorderRadius.circular(20),
+                                        child: ProfileFromComment.profileData.profilePhoto == null
+                                            ? Container(color: Colors.grey, width: 120, height: 120,
+                                                child: Center(child: Icon(Icons.no_photography, size: 32.0,),
                                                 ),
                                               )
-                                            : ProfileFromAd.profileData
-                                                        .profilePhoto ==
-                                                    "profile_photo"
-                                                ? Container(
-                                                    color: Colors.grey,
-                                                    width: 120,
-                                                    height: 120,
-                                                    child: Center(
-                                                      child: Icon(
-                                                        Icons.no_photography,
-                                                        size: 32.0,
-                                                      ),
-                                                    ),
+                                            : ProfileFromComment.profileData.profilePhoto == "profile_photo"
+                                                ? Container(color: Colors.grey, width: 120, height: 120,
+                                                    child: Center(child: Icon(Icons.no_photography, size: 32.0,),),
                                                   )
-                                                : Image.network(
-                                                    ProfileFromAd.profileData
-                                                        .profilePhoto,
-                                                    width: 120,
-                                                    height: 120,
-                                                    fit: BoxFit.contain)),
+                                                : Image.network(ProfileFromComment.profileData.profilePhoto, width: 120, height: 120, fit: BoxFit.contain)),
                                     SizedBox(height: 16),
-                                    UserNameSection(
-                                        ProfileFromAd.profileData.name,
-                                        ProfileFromAd.profileData.lastName,
-                                        ProfileFromAd.profileData.email,
-                                        ProfileFromAd.profileData.userId,
-                                        ProfileFromAd.profileData.portfolio),
-                                    ContactSection(
-                                        ProfileFromAd.profileData.phoneNumber,
-                                        ProfileFromAd.profileData.email),
-                                    RatingSection(
-                                        ProfileFromAd.profileData.rate),
-                                    UserAds(ProfileFromAd.profileData,
-                                        widget.adNumber),
-                                    CommentSection(ProfileFromAd.profileData,
-                                        widget.adNumber),
+                                    UserNameSection(ProfileFromComment.profileData.name, ProfileFromComment.profileData.lastName, ProfileFromComment.profileData.email, ProfileFromComment.profileData.userId, ProfileFromComment.profileData.portfolio),
+                                    ContactSection(ProfileFromComment.profileData.phoneNumber, ProfileFromComment.profileData.email),
+                                    RatingSection(ProfileFromComment.profileData.rate),
+                                    UserAds(ProfileFromComment.profileData, widget.adNumber),
+                                    CommentSection(ProfileFromComment.profileData, widget.adNumber),
                                   ],
                                 )
                               : Column(
@@ -229,7 +174,8 @@ class _ProfileFromAdState extends State<ProfileFromAd> {
                                             ClipRRect(
                                                 borderRadius:
                                                     BorderRadius.circular(20),
-                                                child: ProfileFromAd.profileData
+                                                child: ProfileFromComment
+                                                            .profileData
                                                             .profilePhoto ==
                                                         null
                                                     ? Container(
@@ -244,7 +190,8 @@ class _ProfileFromAdState extends State<ProfileFromAd> {
                                                           ),
                                                         ),
                                                       )
-                                                    : ProfileFromAd.profileData
+                                                    : ProfileFromComment
+                                                                .profileData
                                                                 .profilePhoto ==
                                                             "profile_photo"
                                                         ? Container(
@@ -260,7 +207,7 @@ class _ProfileFromAdState extends State<ProfileFromAd> {
                                                             ),
                                                           )
                                                         : Image.network(
-                                                            ProfileFromAd
+                                                            ProfileFromComment
                                                                 .profileData
                                                                 .profilePhoto,
                                                             width: 120,
@@ -269,13 +216,15 @@ class _ProfileFromAdState extends State<ProfileFromAd> {
                                                                 .contain)),
                                             SizedBox(height: 16),
                                             UserNameSection(
-                                                ProfileFromAd.profileData.name,
-                                                ProfileFromAd
+                                                ProfileFromComment
+                                                    .profileData.name,
+                                                ProfileFromComment
                                                     .profileData.lastName,
-                                                ProfileFromAd.profileData.email,
-                                                ProfileFromAd
+                                                ProfileFromComment
+                                                    .profileData.email,
+                                                ProfileFromComment
                                                     .profileData.userId,
-                                                ProfileFromAd
+                                                ProfileFromComment
                                                     .profileData.portfolio),
                                           ],
                                         ),
@@ -283,22 +232,22 @@ class _ProfileFromAdState extends State<ProfileFromAd> {
                                         Column(
                                           children: <Widget>[
                                             ContactSection(
-                                                ProfileFromAd
+                                                ProfileFromComment
                                                     .profileData.phoneNumber,
-                                                ProfileFromAd
+                                                ProfileFromComment
                                                     .profileData.email),
-                                            RatingSection(
-                                                ProfileFromAd.profileData.rate),
+                                            RatingSection(ProfileFromComment
+                                                .profileData.rate),
                                           ],
                                         ),
                                       ],
                                     ),
                                     Column(
                                       children: <Widget>[
-                                        UserAds(ProfileFromAd.profileData,
+                                        UserAds(ProfileFromComment.profileData,
                                             widget.adNumber),
                                         CommentSection(
-                                            ProfileFromAd.profileData,
+                                            ProfileFromComment.profileData,
                                             widget.adNumber),
                                       ],
                                     ),
@@ -439,7 +388,7 @@ class RatingSection extends StatelessWidget {
           style: new TextStyle(color: Colors.white, fontSize: 16),
         ),
         SizedBox(height: 8),
-        rate == 0
+        rate == null
             ? Text(
                 "Nie ma jeszcze żadnej oceny",
                 style: new TextStyle(color: Colors.white, fontSize: 24),
@@ -494,7 +443,7 @@ class UserAds extends StatelessWidget {
           style: new TextStyle(color: Colors.white, fontSize: 16),
         ),
         FutureBuilder(
-          future: ProfileFromAd.getProfileDataByAdId(id),
+          future: ProfileFromComment.getProfileDataById(id),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
             int numberOfAds = 0;
             int myIndex = 0;
@@ -603,7 +552,7 @@ class CommentSection extends StatelessWidget {
           style: new TextStyle(color: Colors.white, fontSize: 16),
         ),
         FutureBuilder(
-          future: ProfileFromAd.getProfileDataByAdId(id),
+          future: ProfileFromComment.getProfileDataById(id),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
             int numberOfAds = userData.userCommentList.length;
 
@@ -726,25 +675,4 @@ class CommentSection extends StatelessWidget {
       ],
     );
   }
-
-//  static Future<int> getUserCommentingData(int id) async {
-//
-//    final response = await http.get(Config.serverHostString + "/api/users/findbyID?id=" + id.toString());
-//
-//    Map userDataCommentMap = jsonDecode(response.body);
-//    var userDataComment = UserCommentingData.fromJson(userDataCommentMap);
-//
-//    // TODO: CHECK THE REPOSONE NUMBERS
-//
-//    if ((response.statusCode >= 200) && (response.statusCode <= 299)) {
-//
-//      userCommentingData = userDataComment;
-//      print("User commenting data received.");
-//      return response.statusCode;
-//    } else {
-//      print("coś nie pykło");
-//      throw new Exception('Failed to load user commenting data.');
-//    }
-//  }
-
 }
